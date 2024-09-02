@@ -1,0 +1,152 @@
+.table-container {
+  background: #f31762;
+  padding: 24px 48px;
+  border-radius: 15px;
+  overflow-x: auto;
+}
+
+.lending-table {
+  width: 100%;
+  border-collapse: collapse;
+  color: #fff;
+  font-family: Lato;
+  text-align: left;
+}
+
+.lending-table th,
+.lending-table td {
+  padding: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.lending-table thead th {
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.lending-table tbody {
+  display: block;
+  max-height: 380px;
+  overflow-y:scroll;
+}
+
+.lending-table tbody tr {
+  display: table;
+  width: 100%;
+  background-color: #f31762;
+}
+
+.lending-table thead,
+.lending-table tbody tr {
+  display: table;
+  width: 100%;
+  table-layout: fixed;
+}
+
+.asset-name {
+  display: flex;
+  align-items: center;
+}
+
+.asset-info {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #f31762;
+}
+
+.asset-info img {
+  width: 40px;
+  height: 40px;
+  margin-right: 10px;
+  border-radius: 50%;
+}
+
+.price {
+  font-size: 12px;
+  color: #ffdbd0;
+}
+
+.small-text {
+  font-size: 12px;
+  color: #ffdbd0;
+}
+.lending-table tbody::-webkit-scrollbar {
+  width: 8px; /* Width of the scrollbar */
+}
+
+.lending-table tbody::-webkit-scrollbar-track {
+  background: #f8c4d6; /* Background of the track (container of the scrollbar) */
+  border-radius: 10px; /* Rounded edges */
+}
+
+.lending-table tbody::-webkit-scrollbar-thumb {
+  background-color: #ff6699;
+  border-radius: 10px;
+  border: 2px solid #f8c4d6;
+}
+
+/* Scrollbar customization for Firefox */
+.lending-table tbody {
+  scrollbar-width: thin; /* Make the scrollbar thin */
+  scrollbar-color: #ff6699 #f8c4d6; /* Thumb and track colors */
+}
+
+/* Optional: Hover effect on the scrollbar thumb */
+.lending-table tbody::-webkit-scrollbar-thumb:hover {
+  background-color: #ff3366; /* Darker pink when hovered */
+}
+
+.button-deposit {
+  margin-top: 5px;
+  padding: 10px;
+  background-color: #ff3366; 
+  color: white;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  /* background: #FF7F9C; */
+  /* box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.25); */
+
+}
+.token-details{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+@media screen and (max-width: 768px) {
+  .table-container {
+    padding: 10px 10px;
+  }
+  .lending-table thead th {
+    font-size: 10px;
+  }
+  .lending-table th,
+  .lending-table td {
+    font-size: 10px;
+  }
+  .asset-info img {
+    width: 20px;
+    height: 20px;
+    margin-right: 0px;
+    display: none;
+  }
+  .small-text {
+    font-size: 8px;
+  }
+  .price {
+    font-size: 8px;
+  }
+  .asset-info {
+    gap: 2px;
+    padding: 0px 0px;
+  }
+  .lending-table th,
+  .lending-table td {
+    padding: 4px;
+    padding-left: 0px;
+  }
+  .table-name {
+    font-size: 10px;
+  }
+}

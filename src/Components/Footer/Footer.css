@@ -1,0 +1,95 @@
+.footer-container {
+  background: #f31762;
+  padding: 32px 94px;
+  padding-bottom: 0px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.footer-container h5 {
+  color: #fff;
+
+  font-family: "Playfair Display";
+  font-size: 24px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: normal;
+  width: 386px;
+}
+.footer-card2 {
+  display: flex;
+  gap: 60px;
+}
+.footer-card21 span {
+  color: rgba(255, 255, 255, 0.8);
+
+  font-family: Lato;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: normal;
+}
+.footer-card1 span {
+  color: #fff;
+
+  font-family: Lato;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: normal;
+}
+.footer-card21 a {
+  color: #fff;
+  font-family: Lato;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: normal;
+  cursor: pointer;
+  text-decoration: none;
+  /* text-underline-offset: none; */
+}
+.footer-card1 {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.footer-card21 {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+@media screen and (max-width: 768px) {
+  .footer-container {
+    padding: 24px 16px;
+    flex-direction: column;
+    gap: 16px;
+    padding-bottom: 0px;
+  }
+  .footer-card1 {
+    gap: 10px;
+  }
+  .footer-card1 span {
+    font-size: 12px;
+  }
+  .footer-card2 {
+    align-self: start;
+  }
+  .footer-container h5 {
+    width: 100%;
+    font-size: 20px;
+  }
+  .footer-card21 {
+    gap: 10px;
+  }
+  .footer-image {
+    display: flex;
+    align-self: flex-start;
+  }
+  .footer-image img {
+    width: 200px;
+  }
+}

@@ -1,0 +1,74 @@
+/* .chart-container {
+    background: linear-gradient(78deg, #ffddd3 0%, #ff7f9c 100%);
+    padding: 20px;
+    border-radius: 15px;
+    width: 650px;
+  }
+  
+  .chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+  
+  .chart-header h3 {
+    font-size: 24px;
+    color: #fff;
+  }
+  
+  .price-info {
+    font-size: 24px;
+    color: #fff;
+  }
+  
+  .change-info {
+    font-size: 16px;
+    color: #4caf50; /* Green color for positive change */
+    /* margin-left: 10px;
+  }
+  
+  .timeframes {
+    display: flex;
+    gap: 10px;
+  }
+  
+  .timeframes button {
+    background-color: rgba(255, 255, 255, 0.3);
+    border: none;
+    border-radius: 20px;
+    padding: 5px 10px;
+    color: #fff;
+    cursor: pointer;
+    font-size: 14px;
+  }
+  
+  .timeframes button.active {
+    background-color: #ff7f9c;
+  } */ 
+  .chart-button button{
+    background-color: #ff7f9c;
+    border: none;
+    padding: 10px;
+    color: #fff;
+    border-radius: 10px;
+  }
+  .chart-button {
+    display: flex;
+    gap: 16px;
+    background-color: #ffe6e6;
+    justify-content: flex-end;
+    padding-top: 20px;
+    padding-bottom: 20px;
+  }
+  @media screen and (max-width: 768px) {
+  .chart-button button {
+    padding: 5px;
+    color: #fff;
+    border-radius: 4px;
+    font-size: 10px;
+}
+.chart-button {
+  gap: 10px;
+}
+  }

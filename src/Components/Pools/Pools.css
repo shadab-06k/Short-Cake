@@ -1,0 +1,25 @@
+.pool-container{
+    padding: 110px 94px;
+    padding-bottom: 62px;
+    background: linear-gradient(78deg, #FFDDD3 0%, #FF7F9C 100%);
+}
+.pool-container .image1{
+    position: absolute;
+    top: 60px;
+    left: 0;
+}
+.pool-container .image2{
+    position: absolute;
+    top: 60px;
+    right: 0;
+}
+
+@media screen and (max-width: 768px) {
+    .pool-container{
+        padding:  24px 16px;
+    }
+    
+
+.pool-container .image1 {display: none;}
+.pool-container .image2 {display: none;}
+}

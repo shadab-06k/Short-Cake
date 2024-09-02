@@ -1,0 +1,45 @@
+.shorting-container{
+    display: flex;
+    justify-content: space-between;
+   
+    background: linear-gradient(78deg, #FFDDD3 0%, #FF7F9C 100%);
+    padding: 40px 94px;
+    padding-top: 120px;
+}
+.chart-comp{
+    width: 65%;
+}
+.shorting-container .image1{
+    position: absolute;
+    top: 60px;
+    left: 0;
+}
+.shorting-container .image2{
+    position: absolute;
+    top: 60px;
+    right: 0;
+}
+/* .short-comp{
+    width: 50%;
+} */
+
+@media screen and (max-width: 768px) {
+    .shorting-container {
+flex-direction: column;
+        padding:  24px 16px;
+        gap: 16px;
+
+    }
+    .shortcake {
+        flex-direction: column;
+    }
+    .chart-comp{
+        width: 100%;
+    }
+    .shorting-container .image2{
+        display: none;
+    }
+    .shorting-container .image1{
+        display: none;
+    }
+}
