@@ -1,130 +1,114 @@
-import React, { useState } from 'react';
-import './CryptoChart.css'
-import CanvasJSReact from '@canvasjs/react-charts';
+// import React, { useState, useEffect } from "react";
+// import "./CryptoChart.css";
+// import ClipLoader from 'react-spinners/ClipLoader'
 
-const CanvasJSChart = CanvasJSReact.CanvasJSChart;
+// const CryptoChart = ({ pairAddress }) => {
+//   const [isLoading, setIsLoading] = useState(true);
+//   const [hasError, setHasError] = useState(false);
 
-const CryptoChart = () => {
-    const [timeInterval, setTimeInterval] = useState('1D');
+//   const chartUrl = `https://dexscreener.com/solana/${pairAddress}?embed=1&theme=dark&trades=0&info=0`;
 
-    const handleTimeIntervalChange = (interval) => {
-        setTimeInterval(interval);
-        // In a real scenario, fetch new data based on the interval
-    };
+//   useEffect(() => {
+//     if (!pairAddress) {
+//       setHasError(true);
+//       return;
+//     }
 
-    const options = {
-        theme: "light2", 
-        backgroundColor: "#ffe6e6", // Light pink background similar to the image
-        animationEnabled: true,
-        exportEnabled: true,
-        title: {
-            text: "BTC/USDT"
-        },
-        axisX: {
-            valueFormatString: "MMM DD",
-            labelFontColor: "#ff3366",
-            lineColor: "#ff3366",
-        },
-        axisY: {
-            prefix: "$",
-            title: "Price (in USD)",
-            titleFontColor: "#ff3366",
-            labelFontColor: "#ff3366",
-            lineColor: "#ff3366",
-            gridThickness: 1,
-            gridColor: "#ffd9e6"
-        },
-        data: [{
-            type: "candlestick",
-            showInLegend: true,
-            name: "BTC/USDT",
-            yValueFormatString: "$###0.00",
-            xValueFormatString: "MMM DD",
-            risingColor: "#ff6699",  // Color for rising candles
-            fallingColor: "#cc0033",  // Color for falling candles
-            dataPoints: [
-                { x: new Date("2023-07-18"), y: [21800, 22000, 21700, 21900] },
-                { x: new Date("2023-07-19"), y: [22000, 22100, 21800, 22050] },
-                { x: new Date("2023-07-20"), y: [22050, 22200, 21900, 22150] },
-                { x: new Date("2023-07-21"), y: [22150, 22400, 22000, 22200] },
-                { x: new Date("2023-07-22"), y: [22200, 22800, 22100, 22600] },
-                 { x: new Date("2023-07-23"), y: [22200, 22800, 22100, 22600] },
-                 { x: new Date("2023-07-24"), y: [22200, 22800, 22100, 22600] },
-                 { x: new Date("2023-07-25"), y: [22200, 22800, 22100, 22600] },
-                 { x: new Date("2023-07-26"), y: [22200, 22800, 22100, 22600] },
-                // Add more data points as per your requirement
-            ]
-        }]
-    };
+//     const timer = setTimeout(() => {
+//       setHasError(true); // Set error state if loading takes too long
+//       setIsLoading(false); // Remove loading state after timeout
+//     }, 8000); // Set a timeout for 8 seconds in case it fails to load
 
-    return (
-        <div >
-            <div   className='chart-button'>
-                <button onClick={() => handleTimeIntervalChange('1H')}>1H</button>
-                <button onClick={() => handleTimeIntervalChange('3H')}>3H</button>
-                <button onClick={() => handleTimeIntervalChange('5H')}>5H</button>
-                <button onClick={() => handleTimeIntervalChange('1D')}>1D</button>
-                <button onClick={() => handleTimeIntervalChange('1W')}>1W</button>
-                <button onClick={() => handleTimeIntervalChange('1M')}>1M</button>
-            </div>
-            
-            <CanvasJSChart options={options} />
-        </div>
-    );
-}
+//     setIsLoading(true);
+//     setHasError(false);
+
+//     // Cleanup the timer when component unmounts or when pairAddress changes
+//     return () => clearTimeout(timer);
+//   }, [pairAddress]);
+
+//   const handleLoad = () => {
+//     setIsLoading(false);
+//     setHasError(false);
+//   };
+
+//   const handleError = () => {
+//     setHasError(true);
+//     setIsLoading(false);
+//   };
+
+//   return (
+//     <div className="crypto-chart-container">
+//       {isLoading && (
+//         <p
+//           style={{ fontSize: "30px" }}
+//           className="my-5 d-flex justify-content-center align-items-center"
+//         >
+//           {/* Loading... */}
+//           <ClipLoader />{" "}
+//         </p>
+//       )}
+//       {hasError && (
+//         <p
+//           style={{ fontSize: "30px" }}
+//           className="text-danger my-5 d-flex justify-content-center align-items-center"
+//         >
+//           Failed to load data. <br />
+//           Server Timed Out
+//         </p>
+//       )}
+//       {!isLoading && !hasError && (
+//         <div id="dexscreener-embed">
+//           <iframe
+//             src={pairAddress ? chartUrl : "about:blank"}
+//             title="DexScreener Chart"
+//             style={{ width: "100%", height: "500px" }}
+//             onLoad={handleLoad}
+//             onError={handleError}
+//           ></iframe>
+//         </div>
+//       )}
+//     </div>
+//   );
+// };
+
+// export default CryptoChart;
+
+import React from "react";
+import "./CryptoChart.css";
+
+const CryptoChart = ({ pairAddress }) => {
+  const chartUrl = `https://dexscreener.com/solana/${pairAddress}?embed=1&theme=dark&trades=0&info=0`;
+
+  return (
+    <div className="crypto-chart-container">
+      <div id="dexscreener-embed">
+        <iframe
+          src={pairAddress ? chartUrl : "about:blank"} // Use pairAddress to dynamically update the chart
+          title="DexScreener Chart"
+          style={{ width: "100%", height: "500px" }}
+        ></iframe>
+      </div>
+    </div>
+  );
+};
 
 export default CryptoChart;
 
+// import React, { useEffect, useState } from "react";
+// import "./CryptoChart.css";
 
-// import React from 'react';
-// import CanvasJSReact from '@canvasjs/react-charts';
-// const CanvasJSChart = CanvasJSReact.CanvasJSChart;
 // const CryptoChart = () => {
-// 	const options = {
-// 		theme: "pink", // "light1", "light2", "dark1", "dark2"
-// 		animationEnabled: true,
-// 		exportEnabled: true,
-// 		title:{
-// 			text: "Intel Corporation Stock Price -  2017"
-// 		},
-// 		axisX: {
-// 			valueFormatString: "MMM"
-// 		},
-// 		axisY: {
-// 			prefix: "$",
-// 			title: "Price (in USD)"
-// 		},
-// 		data: [{
-// 			type: "candlestick",
-// 			showInLegend: true,
-// 			name: "Intel Corporation",
-// 			yValueFormatString: "$###0.00",
-// 			xValueFormatString: "MMMM YY",
-// 			dataPoints: [
-// 				{ x: new Date("2017-01-01"), y: [36.61, 38.45, 36.19, 36.82] },
-// 				{ x: new Date("2017-02-01"), y: [36.82, 36.95, 34.84, 36.20] },
-// 				{ x: new Date("2017-03-01"), y: [35.85, 36.30, 34.66, 36.07] },
-// 				{ x: new Date("2017-04-01"), y: [36.19, 37.50, 35.21, 36.15] },
-// 				{ x: new Date("2017-05-01"), y: [36.11, 37.17, 35.02, 36.11] },
-// 				{ x: new Date("2017-06-01"), y: [36.12, 36.57, 33.34, 33.74] },
-// 				{ x: new Date("2017-07-01"), y: [33.51, 35.86, 33.23, 35.47] },
-// 				{ x: new Date("2017-08-01"), y: [35.66, 36.70, 34.38, 35.07] },
-// 				{ x: new Date("2017-09-01"), y: [35.24, 38.15, 34.93, 38.08] },
-// 				{ x: new Date("2017-10-01"), y: [38.12, 45.80, 38.08, 45.49] },
-//                 { x: new Date("2017-10-01"), y: [38.12, 45.80, 38.08, 45.49] },
-//                 { x: new Date("2017-10-01"), y: [38.12, 45.80, 38.08, 45.49] },
-//                 { x: new Date("2017-10-01"), y: [38.12, 45.80, 38.08, 45.49] },
-//                 { x: new Date("2017-10-01"), y: [38.12, 45.80, 38.08, 45.49] },
-//                 { x: new Date("2017-10-01"), y: [38.12, 45.80, 38.08, 45.49] },
-// 				{ x: new Date("2017-11-01"), y: [45.97, 47.30, 43.77, 44.84] },
-// 				{ x: new Date("2017-12-01"), y: [44.73, 47.64, 42.67, 46.16] }
-// 			]
-// 		}]
-// 	};
-// 	return (
-// 		<div>
-// 			<CanvasJSChart options={options} />
-// 		</div>
-// 	);
-// }
+//   return (
+//     <div className="crypto-chart-container">
+//       <div id="dexscreener-embed">
+//         <iframe
+//           src="https://dexscreener.com/solana/3ne4mwqdyuniyryzc9tra3fcfufderghh97vnpbjicr1?embed=1&theme=dark&trades=0&info=0"
+//           title="DexScreener Chart"
+//         ></iframe>
+//       </div>
+
+//     </div>
+//   );
+// };
+
 // export default CryptoChart;

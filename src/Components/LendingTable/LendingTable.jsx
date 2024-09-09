@@ -1,3 +1,150 @@
+// import React, { useContext, useState, useEffect } from "react";
+// import "./LendingTable.css";
+// import { WalletContext } from "../WalletContext/WalletContext";
+// import { ToastContainer } from "react-toastify";
+
+// const LendingTable = () => {
+//   const { address, withdrawToken, tokenBalances, transferToken } =
+//     useContext(WalletContext);
+//   const [tokenData, setTokenData] = useState([]);
+
+//   const ipUrl = "http://192.168.1.11:9000";
+
+//   const symbolToNameMapping = {
+//     BONK: "BONK",
+//     WIF: "WIF",
+//     FLOKI: "FLOKI",
+//     SHIB: "SHIB",
+//     CORGIAI: "CORGIAI",
+//   };
+
+//   const fetchData = async () => {
+//     try {
+//       const response = await fetch(`${ipUrl}/shortcake/v1/get-pools`, {
+//         method: "POST",
+//         headers: {
+//           "Content-Type": "application/json",
+//         },
+//         body: JSON.stringify({}),
+//       });
+
+//       if (!response.ok) {
+//         throw new Error(`HTTP error! status: ${response.status}`);
+//       }
+
+//       const result = await response.json();
+//       console.log("Pool Api Response => ", result);
+
+//       const { data } = result;
+
+//       if (data && Array.isArray(data)) {
+//         const mappedData = data.map((pool) => {
+//           const symbol = Object.keys(symbolToNameMapping).find(
+//             (key) => symbolToNameMapping[key] === pool.name
+//           );
+
+//           return {
+//             name: pool.name,
+//             imageUrl: pool.img,
+//             mintAddress: pool.mintAddress,
+//             supply: tokenBalances[symbol] || "0.00", // Use symbol to fetch balance
+//             price: pool.price,
+//           };
+//         });
+
+//         setTokenData(mappedData);
+//         console.log("mapped data of lending table ========", mappedData);
+//       } else {
+//         console.error("No pools data found in the API response");
+//       }
+//     } catch (error) {
+//       console.error("Error fetching token data:", error);
+//     }
+//   };
+
+//   // Fetch data when tokenBalances change or when the wallet is connected
+//   useEffect(() => {
+//     if (address) {
+//       fetchData(); // Fetch token balances when wallet is connected or token balances change
+//     }
+//   }, [address, tokenBalances]); // Trigger when the wallet address or token balances update
+//   useEffect(() => {
+//       fetchData(); // Fetch token balances when wallet is connected or token balances change
+//   }, [tokenBalances]); // Trigger when the wallet address or token balances update
+
+//   return (
+//     <div className="table-container">
+//       <ToastContainer />
+//       <table className="lending-table">
+//         <thead>
+//           <tr>
+//             <th>Token Image</th>
+//             <th>Asset Name</th>
+//             <th>Supply</th>
+//             <th>Deposit</th>
+//             <th>Withdraw</th>
+//           </tr>
+//         </thead>
+//         <tbody>
+//           {tokenData.length === 0 ? (
+//             <tr>
+//               <td colSpan="5" className="text-center">
+//                 No data to display
+//               </td>
+//             </tr>
+//           ) : (
+//             tokenData.map((item, index) => (
+//               <tr key={index}>
+//                 <td className="asset-name">
+//                   <img
+//                     src={item.imageUrl}
+//                     alt={item.name}
+//                     className="token-image"
+//                   />
+//                 </td>
+//                 <td>
+//                   <div className="table-name">{item.name}</div>
+//                 </td>
+//                 <td>{item.supply}</td>
+//                 <td>
+//                   <button
+//                     className="button-deposit"
+//                     type="button"
+//                     disabled={!address}
+//                     onClick={() =>
+//                       transferToken(
+//                         item.name,
+//                         "F4uq3AB7uVBN28MehoV73KPQhXehMMi3A4BMij1tN2tD",
+//                         1
+//                       )
+//                     }
+//                   >
+//                     Deposit
+//                   </button>
+//                 </td>
+//                 <td>
+//                   <button
+//                     className="button-deposit"
+//                     type="button"
+//                     disabled={!address}
+//                     onClick={() => withdrawToken(item.name, 1000000)}
+//                   >
+//                     Withdraw
+//                   </button>
+//                 </td>
+//               </tr>
+//             ))
+//           )}
+//         </tbody>
+//       </table>
+//     </div>
+//   );
+// };
+
+// export default LendingTable;
+
+
+
 import React, { useContext, useState, useEffect } from "react";
 import "./LendingTable.css";
 import { WalletContext } from "../WalletContext/WalletContext";
@@ -8,60 +155,66 @@ const LendingTable = () => {
     useContext(WalletContext);
   const [tokenData, setTokenData] = useState([]);
 
-  // Map symbols to their corresponding mint addresses
-  const mintAddresses = {
-    BONK: "498bK2F1fCNPsHWdTFiXr8dw51p3SAC4tHPzgRpDUo3j",
-    WIF: "6tJrEXMyKN3AB6AMG89TnkegqiUDwKjqaeKkAxJt9amM",
-    FLOKI: "n1EhuBLt5vjZxV3JRojEFUzZbJEdERt5sBXaJBVnXCM",
-    SHIB: "2tKPAw5tJZV6T9q8NrUTLcNzXrnxKHD6NxyHitURpSXj",
-    CORGIAI: "5EJnnu56ESrkaVtUBZqy4GHChGMEgwvNuQNqAzUivP63",
-  };
+  const ipUrl = "http://192.168.1.19:9000";
 
-  const symbols = ["BONK", "WIF", "FLOKI", "SHIB", "CORGIAI"];
+  const symbolToNameMapping = {
+    BONK: "BONK",
+    WIF: "WIF",
+    FLOKI: "FLOKI",
+    SHIB: "SHIB",
+    CORGIAI: "CORGIAI",
+  };
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch(
-          "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=250&page=1&sparkline=false"
-        );
+        const response = await fetch(`${ipUrl}/shortcake/v1/get-pools`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({}),
+        });
 
-        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
 
-        // Filter tokens by symbol and map with mint addresses
-        const filteredData = symbols
-          .map((symbol) => {
-            const token = data.find(
-              (item) => item.symbol.toUpperCase() === symbol
+        const result = await response.json();
+        console.log("Pool Api Response => ", result);
+
+        const { data } = result;
+
+        if (data && Array.isArray(data)) {
+          const mappedData = data.map((pool) => {
+            const symbol = Object.keys(symbolToNameMapping).find(
+              (key) => symbolToNameMapping[key] === pool.name
             );
-            return token
-              ? {
-                  name: token.name,
-                  symbol: token.symbol.toUpperCase(),
-                  imageUrl: token.image,
-                  price: `$${token.current_price}`,
-                  ltv: "0/1.04",
-                  mintAddress: mintAddresses[symbol], // Use the mapped mint address
-                  supply: tokenBalances[symbol]
-                    ? tokenBalances[symbol]
-                    : "0.00",
-                  supplyAPR: "0.02%",
-                  borrow: "603.4567",
-                  borrowPrice: "$76.98",
-                  borrowAPR: "34.98%",
-                }
-              : null;
-          })
-          .filter((item) => item !== null); // Filter out null values in case the symbol wasn't found
 
-        setTokenData(filteredData);
+            return {
+              name: pool.name,
+              imageUrl: pool.img,
+              mintAddress: pool.mintAddress,
+              supply: tokenBalances[symbol] || "0.00", // Use symbol to fetch balance
+              price: pool.price,
+            };
+          });
+
+          setTokenData(mappedData);
+          console.log('mapped data of lending table ========',mappedData)
+          console.log("token data of lending table === ", tokenData);
+        } else {
+          console.error("No pools data found in the API response");
+        }
       } catch (error) {
         console.error("Error fetching token data:", error);
       }
     };
 
     fetchData();
-  }, [tokenBalances]); // Re-fetch if tokenBalances changes
+  }, [tokenBalances]);
+
+  console.log('token data of lending page === ',tokenData)
 
   return (
     <div className="table-container">
@@ -69,70 +222,60 @@ const LendingTable = () => {
       <table className="lending-table">
         <thead>
           <tr>
+            <th>Token Image</th>
             <th>Asset Name</th>
-            <th>LTV/BW</th>
             <th>Supply</th>
-            <th>Supply APR</th>
-            <th>Borrow</th>
-            <th>Borrow APR</th>
+            <th>Deposit</th>
+            <th>Withdraw</th>
           </tr>
         </thead>
         <tbody>
           {tokenData.length === 0 ? (
-            <p className="my-3 text-center">No data to display</p>
+            <tr>
+              <td colSpan="5" className="text-center">
+                No data to display
+              </td>
+            </tr>
           ) : (
             tokenData.map((item, index) => (
               <tr key={index}>
                 <td className="asset-name">
-                  <div className="asset-info">
-                    <img
-                      src={item.imageUrl}
-                      alt={item.name}
-                      className="token-image"
-                    />
-                    <div className="token-details">
-                      <div className="table-name">{item.name}</div>
-                      <div className="price">{item.price}</div>
-                      <button
-                        className="button-deposit cursor-pointer"
-                        type="button"
-                        disabled={!address}
-                        onClick={() =>
-                          transferToken(
-                            item.symbol,
-                            "F4uq3AB7uVBN28MehoV73KPQhXehMMi3A4BMij1tN2tD",
-                            1
-                          )
-                        }
-                      >
-                        Deposit
-                      </button>
-                      <button
-                        className="button-deposit"
-                        type="button"
-                        disabled={!address}
-                        onClick={() => withdrawToken(item.symbol, 1000000)}
-                      >
-                        Withdraw
-                      </button>
-                    </div>
-                  </div>
+                  <img
+                    src={item.imageUrl}
+                    alt={item.name}
+                    className="token-image"
+                  />
                 </td>
-                <td>{item.ltv}</td>
                 <td>
-                  <div>
-                    {item.supply}
-                    <div className="small-text">$765,768</div>
-                  </div>
+                  <div className="table-name">{item.name}</div>
                 </td>
-                <td>{item.supplyAPR}</td>
+                <td>{item.supply}</td>
                 <td>
-                  <div>
-                    {item.borrow}
-                    <div className="small-text">{item.borrowPrice}</div>
-                  </div>
+                  <button
+                    className="button-deposit"
+                    type="button"
+                    disabled={!address}
+                    onClick={() =>
+                      transferToken(
+                        item.name,
+                        "F4uq3AB7uVBN28MehoV73KPQhXehMMi3A4BMij1tN2tD",
+                        1
+                      )
+                    }
+                  >
+                    Deposit
+                  </button>
                 </td>
-                <td>{item.borrowAPR}</td>
+                <td>
+                  <button
+                    className="button-deposit"
+                    type="button"
+                    disabled={!address}
+                    onClick={() => withdrawToken(item.name, 1000000)}
+                  >
+                    Withdraw
+                  </button>
+                </td>
               </tr>
             ))
           )}
@@ -143,196 +286,3 @@ const LendingTable = () => {
 };
 
 export default LendingTable;
-
-// import React, { useContext } from "react";
-// import "./LendingTable.css";
-// import tableImage from "../../assets/Images/wif.png";
-// import { WalletContext } from "../WalletContext/WalletContext";
-// import { ToastContainer } from "react-toastify";
-
-// const LendingTable = () => {
-//   const { tokenBalance, getTokenBalance, transferToken } =
-//     useContext(WalletContext);
-//   console.log("balace pool =>", tokenBalance);
-
-//   const data = [
-//     {
-//       name: "WIF",
-//       price: "$1.15",
-//       ltv: "0/1.04",
-//       mintAddress: "498bK2F1fCNPsHWdTFiXr8dw51p3SAC4tHPzgRpDUo3j",
-//       supply: tokenBalance ? tokenBalance : "No Balance",
-//       supplyAPR: "0.02%",
-//       borrow: "603.4567",
-//       borrowPrice: "$76.98",
-//       borrowAPR: "34.98%",
-//     },
-//     {
-//       name: "BONK",
-//       price: "$1.15",
-//       ltv: "0/1.04",
-//       supply: '"0.02%',
-//       supplyAPR: "0.02%",
-//       borrow: "603.4567",
-//       borrowPrice: "$76.98",
-//       borrowAPR: "34.98%",
-//     },
-//     {
-//       name: "FLOKI",
-//       price: "$1.15",
-//       ltv: "0/1.04",
-//       supply: '"0.02%',
-//       supplyAPR: "0.02%",
-//       borrow: "603.4567",
-//       borrowPrice: "$76.98",
-//       borrowAPR: "34.98%",
-//     },
-//     {
-//       name: "SAMO",
-//       price: "$1.15",
-//       ltv: "0/1.04",
-//       supply: '"0.02%',
-//       supplyAPR: "0.02%",
-//       borrow: "603.4567",
-//       borrowPrice: "$76.98",
-//       borrowAPR: "34.98%",
-//     },
-//     {
-//       name: "MYRO",
-//       price: "$1.15",
-//       ltv: "0/1.04",
-//       supply: '"0.02%',
-//       supplyAPR: "0.02%",
-//       borrow: "603.4567",
-//       borrowPrice: "$76.98",
-//       borrowAPR: "34.98%",
-//     },
-//     {
-//       name: "SHIB",
-//       price: "$0.00002",
-//       ltv: "0/1.04",
-//       supply: '"0.02%',
-//       supplyAPR: "0.01%",
-//       borrow: "1003.789",
-//       borrowPrice: "$10.52",
-//       borrowAPR: "12.23%",
-//     },
-//     {
-//       name: "WIF",
-//       price: "$1.15",
-//       ltv: "0/1.04",
-//       supply: '"0.02%',
-//       supplyAPR: "0.02%",
-//       borrow: "603.4567",
-//       borrowPrice: "$76.98",
-//       borrowAPR: "34.98%",
-//     },
-//     {
-//       name: "BONK",
-//       price: "$1.15",
-//       ltv: "0/1.04",
-//       supply: '"0.02%',
-//       supplyAPR: "0.02%",
-//       borrow: "603.4567",
-//       borrowPrice: "$76.98",
-//       borrowAPR: "34.98%",
-//     },
-//     {
-//       name: "FLOKI",
-//       price: "$1.15",
-//       ltv: "0/1.04",
-//       supply: '"0.02%',
-//       supplyAPR: "0.02%",
-//       borrow: "603.4567",
-//       borrowPrice: "$76.98",
-//       borrowAPR: "34.98%",
-//     },
-//     {
-//       name: "SAMO",
-//       price: "$1.15",
-//       ltv: "0/1.04",
-//       supply: '"0.02%',
-//       supplyAPR: "0.02%",
-//       borrow: "603.4567",
-//       borrowPrice: "$76.98",
-//       borrowAPR: "34.98%",
-//     },
-//     {
-//       name: "MYRO",
-//       price: "$1.15",
-//       ltv: "0/1.04",
-//       supply: '"0.02%',
-//       supplyAPR: "0.02%",
-//       borrow: "603.4567",
-//       borrowPrice: "$76.98",
-//       borrowAPR: "34.98%",
-//     },
-//     {
-//       name: "SHIB",
-//       price: "$0.00002",
-//       ltv: "0/1.04",
-//       supply: '"0.02%',
-//       supplyAPR: "0.01%",
-//       borrow: "1003.789",
-//       borrowPrice: "$10.52",
-//       borrowAPR: "12.23%",
-//     },
-//     // More rows...
-//   ];
-
-//   return (
-//     <div className="table-container">
-//       <ToastContainer />
-//       <table className="lending-table">
-//         <thead>
-//           <tr>
-//             <th>Asset Name</th>
-//             <th>LTV/BW</th>
-//             <th>Supply</th>
-//             <th>Supply APR</th>
-//             <th>Borrow</th>
-//             <th>Borrow APR</th>
-//           </tr>
-//         </thead>
-//         <tbody>
-//           {data.map((item, index) => (
-//             <tr key={index}>
-//               <td className="asset-name">
-//                 <div className="asset-info">
-//                   <img src={tableImage} alt={item.name} />
-//                   <div className="token-details">
-//                     <div className="table-name">{item.name}</div>
-//                     <div className="price">{item.price}</div>
-//                     <button className="button-deposit" type="button" onClick={transferToken}>
-//                       Deposit
-//                     </button>
-//                     <button className="button-deposit" type="button" onClick={transferToken}>
-//                       Withdraw
-//                     </button>
-//                   </div>
-//                 </div>
-//               </td>
-//               <td>{item.ltv}</td>
-//               <td>
-//                 <div>
-//                   {item.supply}
-//                   <div className="small-text">$765,768</div>
-//                 </div>
-//               </td>
-//               <td>{item.supplyAPR}</td>
-//               <td>
-//                 <div>
-//                   {item.borrow}
-//                   <div className="small-text">{item.borrowPrice}</div>
-//                 </div>
-//               </td>
-//               <td>{item.borrowAPR}</td>
-//             </tr>
-//           ))}
-//         </tbody>
-//       </table>
-//     </div>
-//   );
-// };
-
-// export default LendingTable;

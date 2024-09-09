@@ -37,6 +37,8 @@ const WalletProvider = ({ children }) => {
   const [tokenBalances, setTokenBalances] = useState({});
   const [transactionStatus, setTransactionStatus] = useState(null);
 
+  const ipUrl = "http://192.168.1.19:9000";
+
   const checkIfPhantomInstalled = () => {
     return (
       typeof window !== "undefined" && window.solana && window.solana.isPhantom
@@ -55,6 +57,7 @@ const WalletProvider = ({ children }) => {
 
         // Fetch and set the balance for all tokens after connecting the wallet
         await fetchAllTokenBalances(userAddress);
+        await connectWalletApi(userAddress);
         setAddress(userAddress);
 
         toast.success(`Wallet connected: ${userAddress}`, {
@@ -105,7 +108,8 @@ const WalletProvider = ({ children }) => {
       );
 
       const associatedTokenAccount = await getAssociatedTokenAddress(
-        mintPublicKey,
+        // mintPublicKey,
+        new PublicKey(mintPublicKey),
         walletPublicKey
       );
       console.log("associatedTokenAccount => ", associatedTokenAccount);
@@ -119,6 +123,55 @@ const WalletProvider = ({ children }) => {
     } catch (error) {
       console.error("Error fetching token balance:", error);
       return 0;
+    }
+  };
+
+  const connectWalletApi = async (userAddress) => {
+    try {
+      const res = await fetch(`${ipUrl}/shortcake/v1/connect-wallet`, {
+        method: `POST`,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          walletAddress: userAddress,
+        }),
+      });
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+
+      const data = await res.json();
+      console.log("data response => ", data);
+    } catch (error) {
+      console.log("Error fetching data: ", error);
+    }
+  };
+
+  // Updated transferTokenApi to handle dynamic mintAddress
+  const transferTokenApi = async (mintPublicKey, amount) => {
+    try {
+      // const mintAddress = mintPublicKeys[tokenSymbol].toString(); // Get the correct mintAddress based on the tokenSymbol
+      const res = await fetch(`${ipUrl}/shortcake/v1/deposit-pool`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          walletAddress: address,
+          amount: amount,
+          mintAddress: mintPublicKey,
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+
+      const data = await res.json();
+      console.log("data response => ", data);
+    } catch (error) {
+      console.log("Error fetching data: ", error);
     }
   };
 
@@ -149,7 +202,8 @@ const WalletProvider = ({ children }) => {
 
       // Get sender's associated token account
       const senderTokenAccount = await getAssociatedTokenAddress(
-        mintPublicKey,
+        // mintPublicKey,
+        new PublicKey(mintPublicKey),
         senderPublicKey
       );
 
@@ -164,7 +218,8 @@ const WalletProvider = ({ children }) => {
 
       // Get recipient's associated token account
       const recipientTokenAccount = await getAssociatedTokenAddress(
-        mintPublicKey,
+        // mintPublicKey,
+        new PublicKey(mintPublicKey),
         recipientPublicKey
       );
       console.log("recipientTokenAccount => ", recipientTokenAccount);
@@ -180,13 +235,18 @@ const WalletProvider = ({ children }) => {
 
       const { blockhash } = await connection.getLatestBlockhash();
 
+      
+      const smallestUnitAmount =amount * Math.pow(10, 6)
+      
+      console.log('smallestUnitAmount WC page transferToken ===>>>',smallestUnitAmount)
       // Create the transfer transaction
       const transaction = new Transaction().add(
         createTransferInstruction(
           senderTokenAccount,
           recipientTokenAccount,
           senderPublicKey,
-          amount * Math.pow(10, 6), // Adjust decimals as needed
+          // amount * Math.pow(10, 6), // Adjust decimals as needed
+          smallestUnitAmount,
           [],
           TOKEN_PROGRAM_ID
         )
@@ -206,6 +266,7 @@ const WalletProvider = ({ children }) => {
 
       // Fetch the updated token balances
       await fetchAllTokenBalances(address);
+      await transferTokenApi(new PublicKey(mintPublicKey), amount);
 
       setTransactionStatus(
         "Transaction successful with signature: " + signature
@@ -238,13 +299,47 @@ const WalletProvider = ({ children }) => {
     }
   };
 
+  const withdrawTokenApi = async (mintPublicKey) => {
+    try {
+      // const mintAddress = mintPublicKeys[tokenSymbol].toString(); // Get the correct mintAddress based on the tokenSymbol
+      // Ensure address and mintPublicKey are properly defined
+      if (!address || !mintPublicKey) {
+        throw new Error("Missing walletAddress or mintPublicKey");
+      }
+
+      // Log the values being sent to the API for debugging
+      console.log("walletAddress:", address);
+      console.log("mintPublicKey:", mintPublicKey);
+      const res = await fetch(`${ipUrl}/shortcake/v1/withdraw-pool`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          walletAddress: address,
+          // amount: amount,
+          mintAddress: mintPublicKey,
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+
+      const data = await res.json();
+      console.log("data response => ", data);
+    } catch (error) {
+      console.log("Error fetching data: ", error);
+    }
+  };
+
   const withdrawToken = async (tokenSymbol, amount) => {
     try {
       const connection = new Connection(
         "https://api.devnet.solana.com",
         "confirmed"
       );
-  
+
       // Fetch the mint public key dynamically based on the token symbol
       const mintPublicKey = mintPublicKeys[tokenSymbol];
       if (!mintPublicKey) {
@@ -252,7 +347,7 @@ const WalletProvider = ({ children }) => {
           `Mint public key not found for token symbol: ${tokenSymbol}`
         );
       }
-  
+
       const receiver = new PublicKey(address); // The address to which we are withdrawing
       const senderKeypair = Keypair.fromSecretKey(
         Uint8Array.from([
@@ -263,21 +358,25 @@ const WalletProvider = ({ children }) => {
           25, 54,
         ])
       );
-  
+
       const senderTokenAccount = await getOrCreateAssociatedTokenAccount(
         connection,
         senderKeypair, // Payer of the transaction
-        mintPublicKey, // Mint
+        // mintPublicKey, // Mint
+        new PublicKey(mintPublicKey),
         senderKeypair.publicKey // Owner of the token account
       );
-  
+
       const receiverTokenAccount = await getOrCreateAssociatedTokenAccount(
         connection,
         senderKeypair, // Payer of the transaction
-        mintPublicKey, // Mint
+        // mintPublicKey, // Mint
+        new PublicKey(mintPublicKey),
         receiver // Owner of the token account
       );
-  
+
+      console.log('amount WC page withdrawToken ===>>>',amount)
+
       // Create the transfer instruction
       const transferInstruction = createTransferInstruction(
         senderTokenAccount.address, // Source account (sender's token account)
@@ -287,20 +386,23 @@ const WalletProvider = ({ children }) => {
         [], // Signers (if any additional ones are required)
         TOKEN_PROGRAM_ID // SPL Token Program ID
       );
-  
+
       // Create a transaction and add the transfer instruction
       const transaction = new Transaction().add(transferInstruction);
-  
+
       // Sign and send the transaction
-      const signature = await sendAndConfirmTransaction(connection, transaction, [
-        senderKeypair,
-      ]);
-  
+      const signature = await sendAndConfirmTransaction(
+        connection,
+        transaction,
+        [senderKeypair]
+      );
+
       console.log("Transaction confirmed with signature1:", signature);
-  
+
       // Update the token balances
       await fetchAllTokenBalances(provider.publicKey.toString());
-  
+      await withdrawTokenApi(new PublicKey(mintPublicKey),);
+
       // Set transaction status and show success message
       setTransactionStatus("Withdraw successful with signature: " + signature);
       toast.success("Withdraw successful!", {
@@ -330,117 +432,212 @@ const WalletProvider = ({ children }) => {
       });
     }
   };
-  
+  const transferTokenShort = async (
+    tokenSymbol,
+    recipientAddress,
+    amount,
+    multiplier,
+    orderType
+  ) => {
+    try {
+      if (!provider || !provider.isConnected) {
+        throw new Error("Phantom wallet not connected");
+      }
 
-  // const withdrawToken = async (tokenSymbol, amount) => {
-  //   try {
-  //     const connection = new Connection(
-  //       "https://api.devnet.solana.com",
-  //       "confirmed"
-  //     );
+      const senderPublicKey = provider.publicKey;
+      const connection = new Connection(
+        "https://api.devnet.solana.com",
+        "confirmed"
+      );
 
-  //     // Fetch the mint public key dynamically based on the token symbol
-  //     const mintPublicKey = mintPublicKeys[tokenSymbol];
-  //     if (!mintPublicKey) {
-  //       throw new Error(
-  //         `Mint public key not found for token symbol: ${tokenSymbol}`
-  //       );
-  //     }
+      // Fetch the mint public key dynamically based on the token symbol
+      const mintPublicKey = mintPublicKeys[tokenSymbol];
+      if (!mintPublicKey) {
+        throw new Error(
+          `Mint public key not found for token symbol: ${tokenSymbol}`
+        );
+      }
 
-  //     const receiver = new PublicKey(address); // The address from which we are withdrawing
-  //     const senderKeypair = Keypair.fromSecretKey(
-  //       Uint8Array.from([
-  //         99, 153, 185, 2, 176, 202, 136, 24, 48, 36, 90, 13, 91, 36, 51, 211,
-  //         124, 5, 233, 93, 51, 220, 224, 11, 254, 245, 14, 227, 0, 11, 18, 241,
-  //         209, 4, 23, 171, 179, 194, 18, 176, 121, 103, 10, 192, 157, 32, 23,
-  //         61, 105, 211, 36, 61, 96, 8, 12, 131, 122, 122, 139, 206, 238, 217,
-  //         25, 54,
-  //       ])
-  //     );
-  //     getOrCreateAssociatedTokenAccount(
-  //       connection,
-  //       senderKeypair, // Payer of the transaction
-  //       mintPublicKey, // Mint
-  //       senderKeypair.publicKey // Owner of the token account
-  //     )
-  //       .then(function (senderTokenAccount) {
-  //         getOrCreateAssociatedTokenAccount(
-  //           connection,
-  //           senderKeypair, // Payer of the transaction
-  //           mintPublicKey, // Mint
-  //           receiver // Owner of the token account
-  //         )
-  //           .then(function (receiverTokenAccount) {
-  //             // Create the transfer instruction
-  //             const transferInstruction = createTransferInstruction(
-  //               senderTokenAccount.address, // Source account (sender's token account)
-  //               receiverTokenAccount.address, // Destination account (receiver's token account)
-  //               senderKeypair.publicKey, // Owner of the source account (sender)
-  //               amount, // Amount to transfer (in the smallest units, e.g., 1 token if 6 decimals)
-  //               [], // Signers (if any additional ones are required)
-  //               TOKEN_PROGRAM_ID // SPL Token Program ID
-  //             );
-  //             // Create a transaction and add the transfer instruction
-  //             const transaction = new Transaction().add(transferInstruction);
-  //             // Sign and send the transaction
-  //             sendAndConfirmTransaction(connection, transaction, [
-  //               senderKeypair,
-  //             ])
-  //               .then(function (signature) {
-  //                 console.log(
-  //                   "Transaction confirmed with signature1:",
-  //                   signature
-  //                 );
-  //               })
-  //               .catch(function (error) {
-  //                 console.error("Error sending SPL tokens:", error);
-  //               });
-  //           })
-  //           .catch(function (error) {
-  //             console.error(
-  //               "Error getting or creating receiver token account:",
-  //               error
-  //             );
-  //           });
-  //       })
-  //       .catch(function (error) {
-  //         console.error(
-  //           "Error getting or creating sender token account:",
-  //           error
-  //         );
-  //       });
+      const recipientPublicKey = new PublicKey(recipientAddress);
+      console.log("mintPublicKey   ============= >>>>>>>", mintPublicKey);
 
-  //     // Fetch the updated token balances
-  //     await fetchAllTokenBalances(provider.publicKey.toString());
+      // Get sender's associated token account
+      const senderTokenAccount = await getAssociatedTokenAddress(
+        // mintPublicKey,
+        new PublicKey(mintPublicKey),
+        senderPublicKey
+      );
 
-  //     setTransactionStatus("Withdraw successful with signature: " ,signature);
-  //     toast.success("Withdraw successful!", {
-  //       position: "top-center",
-  //       autoClose: 3000,
-  //       hideProgressBar: false,
-  //       closeOnClick: true,
-  //       pauseOnHover: false,
-  //       draggable: true,
-  //       progress: undefined,
-  //       theme: "dark",
-  //       transition: Bounce,
-  //     });
-  //   } catch (error) {
-  //     console.error("Withdraw failed", error);
-  //     setTransactionStatus("Withdraw failed: " + error.message);
-  //     toast.error("Withdraw failed", {
-  //       position: "top-center",
-  //       autoClose: 3000,
-  //       hideProgressBar: false,
-  //       closeOnClick: true,
-  //       pauseOnHover: false,
-  //       draggable: true,
-  //       progress: undefined,
-  //       theme: "dark",
-  //       transition: Bounce,
-  //     });
-  //   }
-  // };
+      // Check if sender's associated token account exists
+      try {
+        await getAccount(connection, senderTokenAccount);
+      } catch (error) {
+        throw new Error(
+          "Sender's associated token account does not exist or is invalid"
+        );
+      }
+
+      // Get recipient's associated token account
+      console.log("mintPublicKey ====>>>>>", mintPublicKey);
+      console.log("recipientPublicKey ====>>>>>", recipientPublicKey);
+
+      const recipientTokenAccount = await getAssociatedTokenAddress(
+        new PublicKey(mintPublicKey),
+        recipientPublicKey
+      );
+
+      // Check if recipient's associated token account exists
+      try {
+        await getAccount(connection, recipientTokenAccount);
+      } catch (error) {
+        throw new Error(
+          "Recipient's associated token account does not exist or is invalid"
+        );
+      }
+
+      const { blockhash } = await connection.getLatestBlockhash();
+
+      // Convert the amount to the smallest unit (e.g., for a token with 6 decimals)
+      const smallestUnitAmount = Math.round(amount * Math.pow(10, 6));
+      console.log('smallestUnitAmount WC page transferTokenShort ===>>>',smallestUnitAmount)
+
+      // Create the transfer transaction
+      const transaction = new Transaction().add(
+        createTransferInstruction(
+          senderTokenAccount,
+          recipientTokenAccount,
+          senderPublicKey,
+          // amount * Math.pow(10, 6), // Adjust decimals as needed
+          smallestUnitAmount,
+          [],
+          TOKEN_PROGRAM_ID
+        )
+      );
+
+      transaction.recentBlockhash = blockhash;
+      transaction.feePayer = senderPublicKey;
+
+      // Sign and send the transaction
+      const signedTransaction = await window.solana.signTransaction(
+        transaction
+      );
+      const signature = await connection.sendRawTransaction(
+        signedTransaction.serialize()
+      );
+      await connection.confirmTransaction(signature, "processed");
+
+      // Fetch the updated token balances
+      await fetchAllTokenBalances(address);
+
+      // After the transfer is successful, call handleOnShort
+      await handleOnShort(
+        new PublicKey(mintPublicKey),
+        amount,
+        multiplier,
+        orderType
+      );
+
+      setTransactionStatus(
+        "Transaction and Short operation successful with signature: " +
+          signature
+      );
+      toast.success("Transaction and Short operation successful!", {
+        position: "top-center",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: false,
+        draggable: true,
+        progress: undefined,
+        theme: "dark",
+        transition: Bounce,
+      });
+    } catch (error) {
+      console.error("Transaction or Short operation failed", error);
+      setTransactionStatus(
+        "Transaction or Short operation failed: " + error.message
+      );
+      toast.error("Transaction or Short operation failed", {
+        position: "top-center",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: false,
+        draggable: true,
+        progress: undefined,
+        theme: "dark",
+        transition: Bounce,
+      });
+    }
+  };
+
+  const handleOnShort = async (
+    mintPublicKey,
+    amount,
+    multiplier,
+    orderType
+  ) => {
+    try {
+      const res = await fetch(`${ipUrl}/shortcake/v1/open-order`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          walletAddress: address,
+          amount: amount,
+          mintAddress: mintPublicKey,
+          leverage: multiplier,
+          orderType: orderType,
+          // "userAddress":"BgcjxR8ewRAmzmgbndaVJsKXRPxvjbvTrup1MXLV8DBS",
+          // "mintAddress":"498bK2F1fCNPsHWdTFiXr8dw51p3SAC4tHPzgRpDUo3j",
+          // amount:1000,
+          // "leverage":2,
+          // "orderType":"short"
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+
+      const data = await res.json();
+      console.log("data response => ", data);
+    } catch (error) {
+      console.log("Error fetching data: ", error);
+    }
+  };
+
+  const onCloseOrders = async (mintPublicKey, orderId) => {
+    try {
+      const res = await fetch(`${ipUrl}/shortcake/v1/close-order`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          walletAddress: address,
+          mintAddress: mintPublicKey,
+          orderId: orderId,
+
+          // "userAddress":"BgcjxR8ewRAmzmgbndaVJsKXRPxvjbvTrup1MXLV8DBS",
+          // "mintAddress":"498bK2F1fCNPsHWdTFiXr8dw51p3SAC4tHPzgRpDUo3j",
+          // amount:1000,
+          // "leverage":2,
+          // "orderType":"short"
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+
+      const data = await res.json();
+      console.log("data response => ", data);
+    } catch (error) {
+      console.log("Error fetching data: ", error);
+    }
+  };
 
   return (
     <WalletContext.Provider
@@ -451,6 +648,9 @@ const WalletProvider = ({ children }) => {
         fetchAllTokenBalances,
         transferToken,
         withdrawToken,
+        handleOnShort,
+        transferTokenShort,
+        onCloseOrders,
       }}
     >
       {children}
@@ -458,292 +658,4 @@ const WalletProvider = ({ children }) => {
   );
 };
 
-export { WalletContext, WalletProvider };
-
-// import React, { createContext, useEffect, useState } from "react";
-// import { Bounce, toast } from "react-toastify"; // Import toast to show notifications
-// import "react-toastify/dist/ReactToastify.css"; // Import toast styles
-// import { PublicKey, Transaction, Connection } from "@solana/web3.js";
-// import {
-//   getAccount,
-//   TOKEN_PROGRAM_ID,
-//   getAssociatedTokenAddress,
-//   createTransferInstruction,
-// } from "@solana/spl-token";
-
-// // Create the context
-// const WalletContext = createContext();
-
-// // Provider component
-// const WalletProvider = ({ children }) => {
-//   // States for wallet connection, address, and balance
-//   const [address, setAddress] = useState(null);
-//   const [balance, setBalance] = useState(null);
-//   const [provider, setProvider] = useState(null);
-//   const [tokenBalance, setTokenBalance] = useState("");
-//   const [transactionStatus, setTransactionStatus] = useState(null);
-
-//   // Function to check if Phantom Wallet is installed
-//   const checkIfPhantomInstalled = () => {
-//     return (
-//       typeof window !== "undefined" && window.solana && window.solana.isPhantom
-//     );
-//   };
-
-//   // Function to connect Phantom Wallet
-//   const connectWallet = async () => {
-//     if (checkIfPhantomInstalled()) {
-//       try {
-//         const response = await window.solana.connect();
-//         const userAddress = response.publicKey.toString();
-//         console.log("Connected Address:", userAddress);
-
-//         setAddress(userAddress);
-//         setProvider(window.solana);
-
-//         // Fetch and set the balance after connecting the wallet
-//         const fetchedBalance = await getTokenBalance();
-//         setTokenBalance(fetchedBalance);
-
-//         toast.success(`Wallet connected: ${userAddress}`, {
-//           position: "top-center",
-//           autoClose: 3000,
-//           hideProgressBar: false,
-//           closeOnClick: true,
-//           pauseOnHover: false,
-//           draggable: true,
-//           progress: undefined,
-//           theme: "dark",
-//           transition: Bounce,
-//         });
-//       } catch (err) {
-//         console.error("Failed to connect Phantom wallet:", err.message);
-//         toast.error("Failed to connect Phantom wallet");
-//       }
-//     } else {
-//       console.log("Please install Phantom Wallet");
-//       toast.warn("Please install Phantom Wallet");
-//     }
-//   };
-
-//   useEffect(() => {
-//     if (address) {
-//       getTokenBalance(address).then((balance) => {
-//         setTokenBalance(balance);
-//       });
-//     }
-//   }, [address]);
-
-//   // useEffect(() => {
-//   //   getTokenBalance();
-//   // }, []);
-
-//   // Function to fetch SOL balance using Solana connection
-//   const getBalance = async (userAddress) => {
-//     try {
-//       const connection = new Connection("https://api.devnet.solana.com");
-//       const publicKey = new PublicKey(userAddress);
-//       const balance = await connection.getBalance(publicKey);
-
-//       const formattedBalance = (balance / 1e9).toFixed(4); // Convert balance from lamports to SOL
-//       return formattedBalance;
-//     } catch (error) {
-//       console.error("Error fetching balance:", error);
-//       return "0"; // Return 0 in case of an error
-//     }
-//   };
-
-//   const getTokenBalance = async () => {
-//     try {
-//       // Establish a connection to the Solana mainnet
-//       const connection = new Connection(
-//         "https://api.devnet.solana.com",
-//         "confirmed"
-//       );
-
-//       // The mint address for the specific token (replace with your token's mint address)
-//       const tokenMintAddress = "498bK2F1fCNPsHWdTFiXr8dw51p3SAC4tHPzgRpDUo3j";
-//       const walletAddress = "F4uq3AB7uVBN28MehoV73KPQhXehMMi3A4BMij1tN2tD";
-
-//       // Create PublicKey instances for the wallet address and token mint address
-//       const walletPublicKey = new PublicKey(walletAddress);
-//       const mintPublicKey = new PublicKey(tokenMintAddress);
-
-//       // Get the associated token account for the wallet and token mint
-//       const associatedTokenAccount = await getAssociatedTokenAddress(
-//         mintPublicKey,
-//         walletPublicKey
-//       );
-
-//       // Fetch the account info
-//       const accountInfo = await getAccount(connection, associatedTokenAccount);
-//       console.log("accountInfo -> ", accountInfo);
-
-//       // Convert balance from smallest units to token units using the account's decimals
-//       const balance = Number(accountInfo.amount) / 10 ** 6;
-//       console.log("Balance of Token inner => ", balance);
-//       // setTokenBalance(balance);
-
-//       return balance;
-//     } catch (error) {
-//       console.error("Error fetching token balance:", error);
-//       return 0; // Return 0 in case of error
-//     }
-//   };
-
-//   console.log("Token Balance => ", tokenBalance);
-
-// const transferToken = async () => {
-//   try {
-//     if (!provider || !provider.isConnected) {
-//       throw new Error("Phantom wallet not connected");
-//     }
-
-//     const senderPublicKey = provider.publicKey;
-//     const connection = new Connection(
-//       "https://api.devnet.solana.com",
-//       "confirmed"
-//     );
-//     const mintAddress = "498bK2F1fCNPsHWdTFiXr8dw51p3SAC4tHPzgRpDUo3j";
-
-//     const backEndAddress = new PublicKey('F4uq3AB7uVBN28MehoV73KPQhXehMMi3A4BMij1tN2tD');
-//       const tokenAddress = await getAssociatedTokenAddress(
-//         mintAddress,  // The mint address
-//         backEndAddress   // The user's public key (wallet address)
-//       );
-//     const backTokenAcc = tokenAddress.toBase58();
-//     // const backTokenAcc = "6Npj7SEtonjzpWuVi6GMUtfrAG9HsgTmCMgkUYMjBh3e";
-//     const recipientTokenAccount = new PublicKey(backTokenAcc);
-
-//     const tokenMintAddress = new PublicKey(mintAddress);
-
-//     const amountToTransfer = 1 * Math.pow(10, 6);
-
-//     const senderTokenAccount = await getAssociatedTokenAddress(
-//       tokenMintAddress,
-//       senderPublicKey
-//     );
-
-//     const { blockhash } = await connection.getLatestBlockhash();
-
-//     const transaction = new Transaction().add(
-//       createTransferInstruction(
-//         senderTokenAccount,
-//         recipientTokenAccount,
-//         senderPublicKey,
-//         amountToTransfer,
-//         [],
-//         TOKEN_PROGRAM_ID
-//       )
-//     );
-
-//     transaction.recentBlockhash = blockhash;
-//     transaction.feePayer = senderPublicKey;
-
-//     console.log("Transaction:", transaction);
-//     console.log("Sender PublicKey:", senderPublicKey.toString());
-
-//     const signedTransaction = await window.solana.signTransaction(
-//       transaction
-//     );
-//     const signature = await connection.sendRawTransaction(
-//       signedTransaction.serialize()
-//     );
-//     await connection.confirmTransaction(signature, "processed");
-//     // Update the token balance after transaction is confirmed
-//     const updatedBalance = await getTokenBalance();
-//     setTokenBalance(updatedBalance);
-
-//     setTransactionStatus(
-//       "Transaction successful with signature: " + signature
-//     );
-//   } catch (error) {
-//     console.error("Transaction failed", error);
-//     setTransactionStatus("Transaction failed: " + error.message);
-//   }
-// };
-
-//   return (
-//     <WalletContext.Provider
-//       value={{
-//         address,
-//         tokenBalance,
-//         connectWallet,
-//         getTokenBalance,
-//         transferToken,
-//       }}
-//     >
-//       {children}
-//     </WalletContext.Provider>
-//   );
-// };
-
-// export { WalletContext, WalletProvider };
-
-// import React, { createContext, useState } from 'react';
-// import { toast } from 'react-toastify'; // Import toast to show notifications
-// import 'react-toastify/dist/ReactToastify.css'; // Import toast styles
-// import { ethers } from 'ethers';
-
-// // Create the context
-// const WalletContext = createContext();
-
-// // Provider component
-// const WalletProvider = ({ children }) => {
-//   // States for wallet connection, address, and balance
-// //   const [walletConnected, setWalletConnected] = useState(false);
-//   const [address, setAddress] = useState(null);
-// //   const [balance, setBalance] = useState('');
-// //   const [provider, setProvider] = useState('');
-
-//   // Function to connect wallet and fetch balance
-//   const connectWallet = async () => {
-//     if (typeof window !== 'undefined' && typeof window.ethereum !== 'undefined') {
-//       try {
-//         const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-//         const userAddress = accounts[0];
-//         console.log('Connected Address:', userAddress);
-//         // setWalletConnected(true);
-//         setAddress(userAddress);
-
-//         // Fetch and set the balance after connecting the wallet
-//         // const fetchedBalance = await getBalance(userAddress);
-//         // setBalance(fetchedBalance);
-//         toast.success('Wallet connected: ${userAddress}');
-//       } catch (err) {
-//         console.error(err.message);
-//         toast.error('Failed to connect wallet');
-//       }
-//     } else {
-//       console.log('Please install MetaMask');
-//       toast.warn('Please install MetaMask');
-//     }
-//   };
-
-//   // Function to fetch balance using ethers.js
-// //   const getBalance = async (userAddress) => {
-// //     const RPC_URL = "https://bsc-dataseed1.binance.org/"; // Replace with your Infura Project ID
-// //     try {
-// //       const provider = new ethers.providers.JsonRpcProvider(RPC_URL);
-// //       setProvider(provider)
-// //       const balance = await provider.getBalance(userAddress);
-// //       return ethers.utils.formatEther(balance); // Format balance to Ether
-// //     } catch (error) {
-// //       console.error('Error fetching balance:', error);
-// //       return '0'; // Return 0 in case of an error
-// //     }
-// //   };
-
-// //   console.log('Context address:', address);
-// //   console.log('Context balance:', balance);
-
-//   // Provide the address, balance, and connectWallet function to children components
-//   return (
-//     <WalletContext.Provider value={{address, connectWallet }}>
-//       {children}
-//     </WalletContext.Provider>
-//   );
-// };
-
-// // Export the context and provider
-// export { WalletContext, WalletProvider };
+export { WalletContext, WalletProvider, mintPublicKeys };

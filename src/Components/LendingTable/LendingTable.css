@@ -43,10 +43,10 @@
   table-layout: fixed;
 }
 
-.asset-name {
+/* .asset-name {
   display: flex;
   align-items: center;
-}
+} */
 
 .asset-info {
   display: flex;
@@ -105,8 +105,6 @@
   border: none;
   border-radius: 10px;
   cursor: pointer;
-  /* background: #FF7F9C; */
-  /* box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.25); */
 
 }
 .token-details{
