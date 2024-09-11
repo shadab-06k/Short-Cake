@@ -18,7 +18,7 @@ function Header() {
       <div className="left-header">
         <h2>
           The world's first <span>shorting</span> platform—multiply your coins
-          here iauhdheqhdoiudoiqhdoiqhdoiwqhdoiwqhdwh!
+          here!
         </h2>
         <p>
           Donec porta id mi ut cursus. In interdum diam dignissim tortor tempus
