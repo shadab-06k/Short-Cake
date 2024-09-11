@@ -41,6 +41,7 @@
   display: table;
   width: 100%;
   table-layout: fixed;
+  text-align: center;
 }
 
 /* .asset-name {

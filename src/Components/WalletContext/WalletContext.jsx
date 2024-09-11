@@ -189,7 +189,7 @@ const WalletProvider = ({ children }) => {
 
       // Fetch the mint public key dynamically based on the token symbol
       const mintPublicKey = mintPublicKeys[tokenSymbol];
-      if (!mintPublicKey) {
+      if (!mintPublicKey && !transferTokenApi) {
         throw new Error(
           `Mint public key not found for token symbol: ${tokenSymbol}`
         );
@@ -235,10 +235,12 @@ const WalletProvider = ({ children }) => {
 
       const { blockhash } = await connection.getLatestBlockhash();
 
-      
-      const smallestUnitAmount =amount * Math.pow(10, 6)
-      
-      console.log('smallestUnitAmount WC page transferToken ===>>>',smallestUnitAmount)
+      const smallestUnitAmount = amount * Math.pow(10, 6);
+
+      console.log(
+        "smallestUnitAmount WC page transferToken ===>>>",
+        smallestUnitAmount
+      );
       // Create the transfer transaction
       const transaction = new Transaction().add(
         createTransferInstruction(
@@ -342,7 +344,7 @@ const WalletProvider = ({ children }) => {
 
       // Fetch the mint public key dynamically based on the token symbol
       const mintPublicKey = mintPublicKeys[tokenSymbol];
-      if (!mintPublicKey) {
+      if (!mintPublicKey && !withdrawTokenApi) {
         throw new Error(
           `Mint public key not found for token symbol: ${tokenSymbol}`
         );
@@ -361,7 +363,7 @@ const WalletProvider = ({ children }) => {
 
       const senderTokenAccount = await getOrCreateAssociatedTokenAccount(
         connection,
-        senderKeypair, // Payer of the transaction
+        senderKeypair, 
         // mintPublicKey, // Mint
         new PublicKey(mintPublicKey),
         senderKeypair.publicKey // Owner of the token account
@@ -375,7 +377,7 @@ const WalletProvider = ({ children }) => {
         receiver // Owner of the token account
       );
 
-      console.log('amount WC page withdrawToken ===>>>',amount)
+      console.log("amount WC page withdrawToken ===>>>", amount);
 
       // Create the transfer instruction
       const transferInstruction = createTransferInstruction(
@@ -401,7 +403,7 @@ const WalletProvider = ({ children }) => {
 
       // Update the token balances
       await fetchAllTokenBalances(provider.publicKey.toString());
-      await withdrawTokenApi(new PublicKey(mintPublicKey),);
+      await withdrawTokenApi(new PublicKey(mintPublicKey));
 
       // Set transaction status and show success message
       setTransactionStatus("Withdraw successful with signature: " + signature);
@@ -499,7 +501,10 @@ const WalletProvider = ({ children }) => {
 
       // Convert the amount to the smallest unit (e.g., for a token with 6 decimals)
       const smallestUnitAmount = Math.round(amount * Math.pow(10, 6));
-      console.log('smallestUnitAmount WC page transferTokenShort ===>>>',smallestUnitAmount)
+      console.log(
+        "smallestUnitAmount WC page transferTokenShort ===>>>",
+        smallestUnitAmount
+      );
 
       // Create the transfer transaction
       const transaction = new Transaction().add(
@@ -613,7 +618,7 @@ const WalletProvider = ({ children }) => {
       const res = await fetch(`${ipUrl}/shortcake/v1/close-order`, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           walletAddress: address,
